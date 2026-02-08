@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 *.save
 *.save.*
+venv/
+__pycache__/
+*.pyc
+*.save
+*.save.*
