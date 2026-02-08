@@ -1,0 +1,259 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> Network Scanner Dashboard 🌐</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #0b1120;
+            color: #e2e8f0;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        /* Header */
+        .header-bar {
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .card {
+            border-radius: 14px;
+            border: none;
+            transition: 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 18px rgba(59,130,246,0.3);
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .active { background: #22c55e; color: white; }
+        .offline { background: #ef4444; color: white; }
+        .new { background: #f59e0b; color: white; }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <!-- Header -->
+    <div class="header-bar d-flex justify-content-between align-items-center">
+        <div class="header-title"> Network Scanner Dashboard 🌐 </div>
+
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#logModal">
+            <i class="bi bi-clock-history"></i>
+        </button>
+    </div>
+
+    <button class="btn btn-primary mb-4" onclick="scan()">Scan Now</button>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>Total Devices</h6>
+                    <h3 id="totalDevices">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>Active Devices</h6>
+                    <h3 id="activeDevices">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6>Offline Devices</h6>
+                    <h3 id="offlineDevices">0</h3>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="card bg-dark mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Connected Devices</h5>
+
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>MAC Address</th>
+                        <th>Vendor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Logs Modal -->
+<div class="modal fade" id="logModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title">Event Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="logList" class="list-group list-group-flush"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Alert -->
+<div class="position-fixed top-0 end-0 p-3">
+  <div id="alertToast" class="toast text-bg-warning border-0">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage">
+        New device detected
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<footer>
+    Developed by Vikas Singh | Cybersecurity Project
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+function showAlert(message){
+    let toastEl = document.getElementById('alertToast');
+    let toastMsg = document.getElementById('toastMessage');
+    toastMsg.innerText = message;
+
+    let toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+
+function scan(){
+ fetch('/scan')
+  .then(res => res.json())
+  .then(data => {
+
+    let tableBody = document.getElementById("deviceTable");
+    tableBody.innerHTML = "";
+
+    let total = data.length;
+    let active = 0;
+    let offline = 0;
+
+    data.forEach(device => {
+
+        if(device.status === "New"){
+            showAlert("New device detected: " + device.ip);
+        }
+
+        let badgeClass = "";
+
+        if(device.status === "Active"){
+            badgeClass = "active";
+            active++;
+        }
+        else if(device.status === "New"){
+            badgeClass = "new";
+            active++;
+        }
+        else{
+            badgeClass = "offline";
+            offline++;
+        }
+
+        let row = `
+        <tr>
+            <td>${device.ip}</td>
+            <td>${device.mac}</td>
+            <td>${device.vendor}</td>
+            <td><span class="status-badge ${badgeClass}">${device.status}</span></td>
+        </tr>`;
+
+        tableBody.innerHTML += row;
+    });
+
+    document.getElementById("totalDevices").innerText = total;
+    document.getElementById("activeDevices").innerText = active;
+    document.getElementById("offlineDevices").innerText = offline;
+
+  });
+}
+
+function loadLogs(){
+ fetch('/logs')
+  .then(res => res.json())
+  .then(data => {
+
+    let logList = document.getElementById("logList");
+    logList.innerHTML = "";
+
+    data.slice().reverse().forEach(log => {
+        let li = document.createElement("li");
+        li.className = "list-group-item bg-dark text-light border-secondary";
+        li.textContent = log;
+        logList.appendChild(li);
+    });
+
+  });
+}
+
+setInterval(() => {
+    scan();
+    loadLogs();
+}, 8000);
+
+window.onload = () => {
+    scan();
+    loadLogs();
+};
+
+</script>
+
+</body>
+</html>
