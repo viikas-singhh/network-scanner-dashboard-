@@ -1,4 +1,4 @@
-# Network Monitoring Dashboard
+# Network Monitoring Dashboard 🔎
 
 A real-time network device scanner built with Python, Flask, and Scapy.
 
